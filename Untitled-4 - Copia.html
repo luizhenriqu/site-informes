@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="pt-br" class=""> <head>
+<html lang="pt-br" class=""> 
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Informes Médicos</title>
@@ -613,7 +614,6 @@
             const filename = `Informe_${docData.paciente.replace(/ /g, '_')}_${docData.id}.pdf`;
             doc.save(filename);
         }
-
 
         // --- FUNÇÕES DE LÓGICA ---
         function showView(viewName) {
