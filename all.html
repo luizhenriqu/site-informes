@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="pt-br" class=""> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Informes Médicos</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/lucide.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script> 
+    <script>
+      // Configuração do Tailwind para tema escuro e cores Gemini
+      tailwind.config = {
+        darkMode: 'class', 
+        theme: {
+          extend: {
+            colors: {
+              'gemini-blue': '#1a73e8', 
+              'gemini-gray': {
+                900: '#202124', 800: '#303134', 700: '#3c4043', 600: '#5f6368', 
+                500: '#9aa0a6', 400: '#bdc1c6', 300: '#e8eaed', 200: '#f1f3f4', 100: '#f8f9fa',
+              },
+            }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gemini-gray-900 transition-colors duration-200">
+
+    <svg style="display:none;" aria-hidden="true">
+        <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <title>Sair</title>
+            <path d="M16 17l5-5-5-5"></path>
+            <path d="M21 12H9"></path>
+            <path d="M7 21H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3"></path>
+        </symbol>
+    </svg>
+    
+    <div id="view-login" class="min-h-screen bg-gradient-to-br from-blue-600 to-purple-700 dark:from-gemini-gray-800 dark:to-gemini-gray-900 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gemini-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="bg-blue-100 dark:bg-blue-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="file-text" class="w-8 h-8 text-blue-600 dark:text-blue-300"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-gemini-gray-100">Sistema de Informes</h1>
+                <p class="text-gray-600 dark:text-gemini-gray-400 mt-2">Acesso restrito</p>
+            </div>
+            
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">CPF (Login)</label>
+                    <input id="login-cpf" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="000.000.000-00" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Matrícula</label>
+                    <input id="login-matricula" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Digite sua matrícula" />
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 dark:bg-gemini-blue dark:hover:bg-blue-500">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="view-documents" class="min-h-screen bg-gray-50 dark:bg-gemini-gray-900" style="display: none;">
+        <header class="bg-white shadow-sm border-b dark:bg-gemini-gray-800 dark:border-gemini-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <i data-lucide="file-text" class="w-8 h-8 text-blue-600 dark:text-gemini-blue"></i>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-gemini-gray-100">Sistema de Informes</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-3">
+                            <label for="profile-upload-input" title="Alterar foto de perfil" class="cursor-pointer">
+                                <img id="user-avatar" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>" alt="Avatar" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gemini-gray-700 object-cover"/>
+                            </label>
+                            <input id="profile-upload-input" type="file" accept="image/*" class="hidden" />
+                        </div>
+                        
+                        <button class="theme-toggle-btn relative p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-blue-600 dark:hover:text-gemini-blue transition-colors" title="Alternar tema">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                <g class="theme-icon-sun transition-all duration-500 ease-in-out transform dark:-rotate-90 dark:scale-50 dark:opacity-0">
+                                  <circle cx="12" cy="12" r="5"></circle>
+                                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </g>
+                                <g class="theme-icon-moon w-5 h-5 absolute top-2 left-2 transition-all duration-500 ease-in-out transform rotate-90 scale-50 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100">
+                                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </g>
+                            </svg>
+                        </button>
+                        
+                        <span id="user-welcome" onclick="openEditProfile()" class="text-sm text-gray-600 dark:text-gemini-gray-300 cursor-pointer hover:underline" title="Editar Perfil"></span>
+                        
+                        <button id="admin-button" onclick="showView('admin')" class="p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-blue-600 transition-colors" style="display: none;">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                        </button>
+                        
+                        <button onclick="handleLogout()" class="p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-red-600 transition-colors">
+                            <svg class="w-5 h-5" aria-hidden="true"><use href="#icon-logout"></use></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white dark:bg-gemini-gray-800 rounded-xl shadow-sm p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gemini-gray-100 mb-4">Novo Informe Médico</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Nome do Paciente</label>
+                            <input id="doc-paciente" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: José da Silva" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Nº Atendimento</label>
+                            <input id="doc-atendimento" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: 123456" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Médico Solicitante</label>
+                            <input id="doc-medico" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: Dr. Carlos Andrade" />
+                        </div>
+                         <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Texto do Laudo / Informe</label>
+                            <textarea id="doc-laudo" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Digite as observações, diagnóstico, etc."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Anexar Exame (Foto)</label>
+                            <div class="border-2 border-dashed border-gray-300 dark:border-gemini-gray-600 rounded-lg p-6 text-center">
+                                <div id="preview-container" style="display: none;" class="space-y-2">
+                                    <img id="doc-preview" alt="Preview" class="w-full h-32 object-contain rounded-lg"/> <button id="remove-image-btn" class="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400">Remover</button>
+                                </div>
+                                <div id="upload-container">
+                                    <i data-lucide="camera" class="w-8 h-8 text-gray-400 dark:text-gemini-gray-500 mx-auto mb-2"></i>
+                                    <p class="text-sm text-gray-600 dark:text-gemini-gray-400 mb-2">Clique para selecionar imagem</p>
+                                    <input type="file" accept="image/jpeg, image/png, image/webp" id="document-upload" class="hidden" /> <label for="document-upload" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer hover:bg-blue-700 dark:bg-gemini-blue dark:hover:bg-blue-500">
+                                        Selecionar Arquivo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button id="save-document-btn" class="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">
+                            Salvar Informe (e Gerar PDF)
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gemini-gray-800 rounded-xl shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gemini-gray-100">Informes Salvos</h2>
+                    <button onclick="showView('reports')" class="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-gemini-blue dark:hover:bg-blue-500">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Relatórios</span>
+                    </button>
+                </div>
+                
+                <div id="document-list-empty" class="text-center py-12">
+                    <i data-lucide="file-text" class="w-12 h-12 text-gray-400 dark:text-gemini-gray-500 mx-auto mb-4"></i>
+                    <p class="text-gray-600 dark:text-gemini-gray-400">Nenhum informe encontrado</p>
+                </div>
+
+                <div id="document-list-table" class="overflow-x-auto" style="display: none;">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gemini-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Paciente</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Nº Atendimento</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Médico</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Data</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documents-table-body" class="bg-white dark:bg-gemini-gray-800 divide-y dark:divide-gemini-gray-700">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="view-reports" class="min-h-screen bg-gray-50 dark:bg-gemini-gray-900" style="display: none;">
+        <header class="bg-white shadow-sm border-b dark:bg-gemini-gray-800 dark:border-gemini-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <i data-lucide="file-text" class="w-8 h-8 text-blue-600 dark:text-gemini-blue"></i>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-gemini-gray-100">Relatórios</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showView('documents')" class="text-blue-600 dark:text-gemini-blue hover:text-blue-800 font-medium">Voltar</button>
+                        <div class="flex items-center space-x-3">
+                            
+                            <button class="theme-toggle-btn relative p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-blue-600 dark:hover:text-gemini-blue transition-colors" title="Alternar tema">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                    <g class="theme-icon-sun transition-all duration-500 ease-in-out transform dark:-rotate-90 dark:scale-50 dark:opacity-0">
+                                      <circle cx="12" cy="12" r="5"></circle>
+                                      <line x1="12" y1="1" x2="12" y2="3"></line>
+                                      <line x1="12" y1="21" x2="12" y2="23"></line>
+                                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                      <line x1="1" y1="12" x2="3" y2="12"></line>
+                                      <line x1="21" y1="12" x2="23" y2="12"></line>
+                                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                    </g>
+                                    <g class="theme-icon-moon w-5 h-5 absolute top-2 left-2 transition-all duration-500 ease-in-out transform rotate-90 scale-50 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100">
+                                       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                    </g>
+                                </svg>
+                            </button>
+
+                            <label for="profile-upload-input" title="Alterar foto de perfil" class="cursor-pointer hidden md:block">
+                                <img id="user-avatar-reports" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>" alt="Avatar" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gemini-gray-700 object-cover"/>
+                            </label>
+                            <button onclick="handleLogout()" class="p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-red-600 transition-colors">
+                                <svg class="w-5 h-5" aria-hidden="true"><use href="#icon-logout"></use></svg>
+                            </button>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white dark:bg-gemini-gray-800 rounded-xl shadow-sm p-6 mb-8">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gemini-gray-100 mb-6">Filtros de Relatório</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Data Inicial</label>
+                        <input id="filter-start-date" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-2">Data Final</label>
+                        <input id="filter-end-date" type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" />
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end">
+                    <button id="filter-apply-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 dark:bg-gemini-blue dark:hover:bg-blue-500 flex items-center space-x-2">
+                        <i data-lucide="filter" class="w-4 h-4"></i>
+                        <span>Filtrar</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white dark:bg-gemini-gray-800 rounded-xl shadow-sm p-6">
+                <h3 id="report-results-title" class="text-lg font-semibold text-gray-900 dark:text-gemini-gray-100 mb-4">Resultados (0)</h3>
+                <div id="report-list-empty" class="text-center py-8">
+                    <i data-lucide="search" class="w-12 h-12 text-gray-400 dark:text-gemini-gray-500 mx-auto mb-4"></i>
+                    <p class="text-gray-600 dark:text-gemini-gray-400">Nenhum informe encontrado com os filtros aplicados</p>
+                </div>
+                <div id="report-list-table" class="overflow-x-auto" style="display: none;">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gemini-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Paciente</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Nº Atendimento</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Data</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Criado Por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-table-body" class="bg-white dark:bg-gemini-gray-800 divide-y dark:divide-gemini-gray-700">
+                           </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="view-admin" class="min-h-screen bg-gray-50 dark:bg-gemini-gray-900" style="display: none;">
+        <header class="bg-white shadow-sm border-b dark:bg-gemini-gray-800 dark:border-gemini-gray-700">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-3">
+                        <i data-lucide="settings" class="w-8 h-8 text-blue-600 dark:text-gemini-blue"></i>
+                        <h1 class="text-xl font-semibold text-gray-900 dark:text-gemini-gray-100">Administração</h1>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button onclick="showView('documents')" class="text-blue-600 dark:text-gemini-blue hover:text-blue-800 font-medium">Voltar</button>
+                        <div class="flex items-center space-x-3">
+                            
+                            <button class="theme-toggle-btn relative p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-blue-600 dark:hover:text-gemini-blue transition-colors" title="Alternar tema">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                                    <g class="theme-icon-sun transition-all duration-500 ease-in-out transform dark:-rotate-90 dark:scale-50 dark:opacity-0">
+                                      <circle cx="12" cy="12" r="5"></circle>
+                                      <line x1="12" y1="1" x2="12" y2="3"></line>
+                                      <line x1="12" y1="21" x2="12" y2="23"></line>
+                                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                      <line x1="1" y1="12" x2="3" y2="12"></line>
+                                      <line x1="21" y1="12" x2="23" y2="12"></line>
+                                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                    </g>
+                                    <g class="theme-icon-moon w-5 h-5 absolute top-2 left-2 transition-all duration-500 ease-in-out transform rotate-90 scale-50 opacity-0 dark:rotate-0 dark:scale-100 dark:opacity-100">
+                                       <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                    </g>
+                                </svg>
+                            </button>
+
+                            <label for="profile-upload-input" title="Alterar foto de perfil" class="cursor-pointer hidden md:block">
+                                <img id="user-avatar-admin" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>" alt="Avatar" class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gemini-gray-700 object-cover"/>
+                            </label>
+                            <button onclick="handleLogout()" class="p-2 text-gray-600 dark:text-gemini-gray-400 hover:text-red-600 transition-colors">
+                                <svg class="w-5 h-5" aria-hidden="true"><use href="#icon-logout"></use></svg>
+                            </button>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white dark:bg-gemini-gray-800 rounded-xl shadow-sm p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-gemini-gray-100">Gerenciamento de Usuários</h2>
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="users" class="w-5 h-5 text-gray-600 dark:text-gemini-gray-400"></i>
+                        <span id="active-users-count" class="text-sm text-gray-600 dark:text-gemini-gray-400"></span>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 dark:bg-gemini-gray-700">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">CPF (Login)</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Matrícula</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Nome Completo</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gemini-gray-300 uppercase">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body" class="bg-white dark:bg-gemini-gray-800 divide-y dark:divide-gemini-gray-700">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+
+    <div id="edit-profile-modal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex items-center justify-center" style="display: none; z-index: 60;">
+        <div class="bg-white dark:bg-gemini-gray-800 rounded-lg p-6 w-full max-w-lg mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold dark:text-gemini-gray-100">Editar Perfil</h3>
+                <button id="edit-cancel" class="text-gray-500 dark:text-gemini-gray-400 hover:text-gray-700 dark:hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center space-x-4">
+                    <img id="edit-avatar-preview" src="" alt="Avatar" class="w-16 h-16 rounded-full object-cover bg-gray-100 dark:bg-gemini-gray-700"/>
+                    <div>
+                        <button id="edit-change-photo" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 dark:bg-gemini-blue dark:hover:bg-blue-500 text-sm">Alterar Foto</button>
+                        <p class="text-xs text-gray-500 dark:text-gemini-gray-400 mt-2">Clique para selecionar uma imagem local.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-1">Nome</label>
+                        <input id="edit-nome" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: João" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-1">Sobrenome</label>
+                        <input id="edit-sobrenome" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: Silva" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-1">CPF / CNPJ (para relatórios)</label>
+                        <input id="edit-cpf_cnpj" type="text" maxlength="18" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="000.000.000-00" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-1">Idade</label>
+                        <input id="edit-idade" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: 34" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-1">CRM (se aplicável)</label>
+                        <input id="edit-crm" type="text" maxlength="9" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="Ex: 12345-SP" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gemini-gray-300 mb-1">Nº Telefone</label>
+                        <input id="edit-telefone" type="text" maxlength="15" class="w-full px-3 py-2 border border-gray-300 rounded-lg dark:bg-gemini-gray-700 dark:border-gemini-gray-600 dark:text-white dark:placeholder-gemini-gray-400" placeholder="(11) 98888-7777" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button id="edit-cancel-2" class="px-4 py-2 rounded border border-gray-300 dark:border-gemini-gray-600 dark:text-white hover:bg-gray-50 dark:hover:bg-gemini-gray-700">Cancelar</button>
+                    <button id="edit-save" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DADOS DO APLICATIVO ---
+        let users = [
+            { cpf: '70948845163', matricula: '140305', nome: 'Luiz', sobrenome: 'Henrique', cpf_cnpj: '70948845163', idade: '20', crm: 'naopossui', telefone: '61999692085', role: 'user', active: true },
+            { cpf: '98765432109', matricula: '54321', nome: 'Maria', sobrenome: 'Santos', cpf_cnpj: '98765432109', idade: '45', crm: '54321-RJ', telefone: '21977776666', role: 'admin', active: true },
+            { cpf: '11122233344', matricula: '99999', nome: 'Carlos', sobrenome: 'Oliveira', cpf_cnpj: '11122233344', idade: '28', crm: '', telefone: '41966665555', role: 'user', active: false },
+            { cpf: '70948845163', matricula: '0001', nome: 'Usuário', sobrenome: 'Teste', cpf_cnpj: '70948845163', idade: '', crm: '', telefone: '', role: 'user', active: true }
+        ];
+        let documents = [];
+        let currentUser = null;
+        let currentView = 'login';
+        let newDocumentImage = null; 
+
+        // --- FUNÇÕES DE MÁSCARA ---
+        function maskCPF_CNPJ(value) {
+            value = value.replace(/\D/g, ''); 
+            if (value.length <= 11) { 
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            } else { 
+                value = value.substring(0, 14); 
+                value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+                value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+                value = value.replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+            }
+            return value;
+        }
+        function maskTelefone(value) {
+            value = value.replace(/\D/g, '').substring(0, 11); 
+            if (value.length > 10) { 
+                value = value.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+            } else if (value.length > 6) {
+                value = value.replace(/^(\d{2})(\d{4})(\d{0,4})$/, '($1) $2-$3');
+            } else if (value.length > 2) { 
+                value = value.replace(/^(\d{2})(\d{0,5})$/, '($1) $2');
+            } else if (value.length > 0) {
+                value = value.replace(/^(\d{0,2})$/, '($1');
+            }
+            return value;
+        }
+        function maskCRM(value) {
+            value = value.toUpperCase();
+            value = value.replace(/[^A-Z0-9]/g, ''); 
+            value = value.replace(/^(\d+)([A-Z]+)$/, '$1-$2'); 
+            value = value.replace(/-([A-Z]{2}).+/, '-$1'); 
+            value = value.replace(/(\d{6})\d+/, '$1'); 
+            return value.substring(0, 9); 
+        }
+
+        // --- FUNÇÕES DE TEMA (SIMPLIFICADAS) ---
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            const isDark = htmlEl.classList.toggle('dark');
+            const newTheme = isDark ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            lucide.createIcons(); // Recria icones (inclusive o do modal se aberto)
+        }
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+            
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // --- FUNÇÃO DE GERAR PDF (INSERIDA AQUI) ---
+        // --- FUNÇÃO DE GERAR PDF (ATUALIZADA COM LAYOUT INSPIRADO) ---
+        function generateAndDownloadPDF(docData) {
+            // Verifica se jsPDF está carregado
+            if (typeof jspdf === 'undefined') {
+                console.error('jsPDF library is not loaded.');
+                alert('Erro ao carregar a biblioteca PDF. Não foi possível gerar o arquivo.');
+                return;
+            }
+            const { jsPDF } = jspdf; // Importa o construtor do objeto global
+            const doc = new jsPDF();
+            
+            let y = 15; // Posição vertical inicial
+            const margin = 15; // Margem um pouco maior
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const usableWidth = pageWidth - 2 * margin;
+            const col1_x = margin;
+            const col2_x = pageWidth / 2 + 5; // Início da segunda coluna (aproximado)
+
+            // --- Cabeçalho Simples (Timestamp) ---
+            doc.setFontSize(9);
+            doc.setTextColor(150); // Cinza
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth - margin, y, { align: 'right' });
+            y += 10;
+            
+            // --- Título Principal ---
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold'); 
+            doc.setTextColor(0); // Preto
+            doc.text("INFORME MÉDICO", pageWidth / 2, y, { align: 'center' });
+            doc.setFont(undefined, 'normal'); 
+            y += 12;
+
+            // --- Bloco 1: Informações Gerais (Layout de 2 Colunas) ---
+            doc.setFontSize(10);
+            
+            // Linha 1
+            doc.setFont(undefined, 'bold'); doc.text("Nº Atendimento:", col1_x, y);
+            doc.setFont(undefined, 'normal'); doc.text(docData.atendimento || 'N/A', col1_x + 35, y); 
+            
+            doc.setFont(undefined, 'bold'); doc.text("Data Criação:", col2_x, y);
+            doc.setFont(undefined, 'normal'); doc.text(docData.createdAt || 'N/A', col2_x + 30, y);
+            y += 7;
+
+            // Linha 2
+            doc.setFont(undefined, 'bold'); doc.text("Paciente:", col1_x, y);
+            doc.setFont(undefined, 'normal'); doc.text(docData.paciente || 'N/A', col1_x + 35, y);
+
+            // Adiciona telefone do usuário logado (se houver) como exemplo de dado extra
+            if (currentUser && currentUser.telefone) {
+                doc.setFont(undefined, 'bold'); doc.text("Telefone (Usuário):", col2_x, y);
+                doc.setFont(undefined, 'normal'); doc.text(maskTelefone(currentUser.telefone), col2_x + 38, y);
+            }
+            y += 7;
+
+            // Linha 3
+            doc.setFont(undefined, 'bold'); doc.text("Médico Solicitante:", col1_x, y);
+            doc.setFont(undefined, 'normal'); doc.text(docData.medico || 'N/A', col1_x + 35, y);
+
+            doc.setFont(undefined, 'bold'); doc.text("Gerado por:", col2_x, y);
+            doc.setFont(undefined, 'normal'); doc.text(docData.createdBy || 'N/A', col2_x + 30, y);
+            y += 10;
+            
+            // --- Linha Separadora ---
+            doc.setDrawColor(200, 200, 200); 
+            doc.line(margin, y, pageWidth - margin, y);
+            y += 10;
+
+            // --- Bloco 2: Laudo ---
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'bold');
+            doc.text("Laudo / Observações:", margin, y);
+            y += 7;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            // Divide o texto em linhas que cabem na página
+            const laudoLines = doc.splitTextToSize(docData.laudo || 'Nenhum laudo informado.', usableWidth);
+            doc.text(laudoLines, margin, y);
+            y += laudoLines.length * 5 + 10; // Ajusta y baseado no número de linhas
+
+            // --- Bloco 3: Anexo (Imagem) ---
+            if (docData.image) {
+                 // Verifica espaço antes de adicionar separador e imagem
+                 const estimatedImageHeight = 80; // Estimativa da altura da imagem
+                 if (y + estimatedImageHeight > doc.internal.pageSize.getHeight() - margin - 10) { // Verifica se cabe antes do rodapé
+                     doc.addPage();
+                     y = margin + 10; // Reinicia y na nova página
+                 } else {
+                    // Linha Separadora antes da imagem (opcional)
+                    doc.setDrawColor(220, 220, 220); 
+                    doc.line(margin, y, pageWidth - margin, y);
+                    y += 10;
+                 }
+
+                try {
+                    doc.setFontSize(11);
+                    doc.setFont(undefined, 'bold');
+                    doc.text("Anexo:", margin, y);
+                    y += 7;
+                    doc.setFont(undefined, 'normal');
+
+                    const imgProps = doc.getImageProperties(docData.image);
+                    let imgWidth = usableWidth * 0.75; // Usa 75% da largura útil
+                    let imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+                    const maxImgHeight = doc.internal.pageSize.getHeight() - y - margin - 15; // Altura máxima antes do rodapé
+
+                    // Redimensiona se a imagem for muito alta
+                    if(imgHeight > maxImgHeight) {
+                        imgHeight = maxImgHeight;
+                        imgWidth = (imgProps.width * imgHeight) / imgProps.height;
+                    }
+                    // Centraliza a imagem
+                    const imgX = (pageWidth - imgWidth) / 2; 
+                    
+                    doc.addImage(docData.image, 'JPEG', imgX, y, imgWidth, imgHeight); 
+                    y += imgHeight + 10; 
+                } catch (error) {
+                    console.error("Erro ao adicionar imagem ao PDF:", error);
+                    doc.setTextColor(255, 0, 0); // Vermelho
+                    doc.text("Erro ao processar o anexo.", margin, y);
+                    doc.setTextColor(0, 0, 0); // Volta para preto
+                    y += 7;
+                }
+            }
+            
+            // --- Rodapé Simples ---
+            const pageHeight = doc.internal.pageSize.getHeight();
+            doc.setFontSize(8);
+            doc.setTextColor(150); // Cinza
+            doc.text(`Sistema de Informes Médicos - ${new Date().getFullYear()}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+            // --- Salvar ---
+            const filename = `Informe_${docData.paciente.replace(/ /g, '_')}_${docData.id}.pdf`;
+            doc.save(filename);
+        }
+
+        // --- FUNÇÕES DE LÓGICA ---
+        function showView(viewName) {
+            document.getElementById('view-login').style.display = 'none';
+            document.getElementById('view-documents').style.display = 'none';
+            document.getElementById('view-reports').style.display = 'none';
+            document.getElementById('view-admin').style.display = 'none';
+
+            const viewToShow = document.getElementById(`view-${viewName}`);
+            if (viewToShow) {
+                if (viewName === 'login') {
+                    viewToShow.style.display = 'flex'; // CORREÇÃO AQUI
+                } else {
+                    viewToShow.style.display = 'block';
+                }
+            }
+            
+            currentView = viewName;
+            
+            if (viewName === 'documents') renderDocumentsTable();
+            if (viewName === 'admin') renderUsersTable();
+            if (viewName === 'reports') renderReportsTable();
+        }
+        function handleLogin(event) {
+            event.preventDefault(); 
+            const cpf = document.getElementById('login-cpf').value.replace(/[\.-]/g, '');
+            const matricula = document.getElementById('login-matricula').value;
+            const user = users.find(u => u.cpf === cpf && u.matricula === matricula);
+
+            if (user && user.active) {
+                currentUser = user;
+                document.getElementById('user-welcome').innerText = `Bem-vindo, ${user.nome} ${user.sobrenome}`;
+                
+                if (user.role === 'admin') {
+                    document.getElementById('admin-button').style.display = 'block';
+                } else {
+                    document.getElementById('admin-button').style.display = 'none';
+                }
+                
+                showView('documents');
+                renderUserAvatar(); 
+            } else {
+                alert('CPF, matrícula inválidos ou usuário inativo!');
+            }
+        }
+        function handleLogout() {
+            currentUser = null;
+            document.getElementById('login-form').reset(); 
+            showView('login');
+            renderUserAvatar(); 
+        }
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) { // Verifica se é imagem
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    newDocumentImage = e.target.result; 
+                    document.getElementById('doc-preview').src = newDocumentImage;
+                    document.getElementById('preview-container').style.display = 'block';
+                    document.getElementById('upload-container').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Por favor, selecione um arquivo de imagem (JPEG, PNG, WEBP).');
+                event.target.value = null; // Limpa a seleção
+            }
+        }
+        function removeImage() {
+            newDocumentImage = null;
+            document.getElementById('doc-preview').src = '';
+            document.getElementById('document-upload').value = null; 
+            document.getElementById('preview-container').style.display = 'none';
+            document.getElementById('upload-container').style.display = 'block';
+        }
+        
+        // ATUALIZADO: Chama generateAndDownloadPDF
+        function saveDocument() {
+            const paciente = document.getElementById('doc-paciente').value;
+            const atendimento = document.getElementById('doc-atendimento').value;
+            const medico = document.getElementById('doc-medico').value;
+            const laudo = document.getElementById('doc-laudo').value;
+
+            if (!paciente || !atendimento || !laudo) {
+                alert('Preencha Paciente, Nº Atendimento e Texto do Laudo!');
+                return;
+            }
+
+            const newDoc = {
+                id: Date.now(),
+                paciente: paciente,
+                atendimento: atendimento,
+                medico: medico,
+                laudo: laudo,
+                image: newDocumentImage, 
+                createdAt: new Date().toISOString().split('T')[0], 
+                createdBy: currentUser ? `${currentUser.nome} ${currentUser.sobrenome}` : 'Desconhecido'
+            };
+
+            documents.push(newDoc); 
+            
+            // Gera e baixa o PDF antes de limpar
+            generateAndDownloadPDF(newDoc); 
+            
+            alert('Informe salvo e PDF gerado!');
+            
+            // Limpa o formulário
+            document.getElementById('doc-paciente').value = '';
+            document.getElementById('doc-atendimento').value = '';
+            document.getElementById('doc-medico').value = '';
+            document.getElementById('doc-laudo').value = '';
+            removeImage();
+
+            renderDocumentsTable();
+        }
+
+        function renderDocumentsTable() {
+            const tableBody = document.getElementById('documents-table-body');
+            
+            if (documents.length === 0) {
+                document.getElementById('document-list-empty').style.display = 'block';
+                document.getElementById('document-list-table').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('document-list-empty').style.display = 'none';
+            document.getElementById('document-list-table').style.display = 'block';
+            
+            tableBody.innerHTML = ''; 
+            documents.forEach(doc => {
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gemini-gray-700">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gemini-gray-100">${doc.paciente}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${doc.atendimento}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${doc.medico}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${doc.createdAt}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <button onclick="deleteDocument(${doc.id})" class="text-red-600 dark:text-red-500 hover:text-red-800 dark:hover:text-red-400">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row; 
+            });
+            lucide.createIcons(); 
+        }
+        function deleteDocument(id) {
+            if (confirm('Tem certeza que deseja excluir este informe?')) {
+                documents = documents.filter(doc => doc.id !== id);
+                renderDocumentsTable(); 
+            }
+        }
+        function renderReportsTable() {
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+
+            const filteredDocs = documents.filter(doc => {
+                const matchesDate = (!startDate || doc.createdAt >= startDate) &&
+                                   (!endDate || doc.createdAt <= endDate);
+                return matchesDate;
+            });
+
+            const tableBody = document.getElementById('reports-table-body');
+            document.getElementById('report-results-title').innerText = `Resultados (${filteredDocs.length})`;
+
+            if (filteredDocs.length === 0) {
+                document.getElementById('report-list-empty').style.display = 'block';
+                document.getElementById('report-list-table').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('report-list-empty').style.display = 'none';
+            document.getElementById('report-list-table').style.display = 'block';
+
+            tableBody.innerHTML = ''; 
+            filteredDocs.forEach(doc => {
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gemini-gray-700">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gemini-gray-100">${doc.paciente}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${doc.atendimento}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${doc.createdAt}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${doc.createdBy}</td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+        }
+        function renderUsersTable() {
+            const tableBody = document.getElementById('users-table-body');
+            tableBody.innerHTML = '';
+            
+            const activeCount = users.filter(u => u.active).length;
+            document.getElementById('active-users-count').innerText = `${activeCount} ativos`;
+
+            users.forEach(user => {
+                const statusClass = user.active 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+                const statusText = user.active ? 'Ativo' : 'Inativo';
+                const icon = user.active ? 'lock' : 'unlock';
+                const iconClass = user.active 
+                    ? 'text-red-600 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-900' 
+                    : 'text-green-600 hover:bg-green-50 dark:text-green-500 dark:hover:bg-green-900';
+
+                const row = `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gemini-gray-700">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gemini-gray-100">${user.cpf}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${user.matricula}</td>
+                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-gemini-gray-100">${user.nome} ${user.sobrenome}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            <button onclick="toggleUserStatus('${user.cpf}')" class="p-2 rounded-lg ${iconClass}">
+                                <i data-lucide="${icon}" class="w-4 h-4"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.innerHTML += row;
+            });
+            lucide.createIcons();
+        }
+        function toggleUserStatus(cpf) {
+            const user = users.find(u => u.cpf === cpf);
+            if (user) {
+                user.active = !user.active;
+                renderUsersTable(); 
+            }
+        }
+        function renderUserAvatar() {
+            const placeholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+            const avatarMain = document.getElementById('user-avatar');
+            const avatarReports = document.getElementById('user-avatar-reports');
+            const avatarAdmin = document.getElementById('user-avatar-admin');
+            const src = (currentUser && currentUser.profileImage) ? currentUser.profileImage : placeholder;
+            if (avatarMain) avatarMain.src = src;
+            if (avatarReports) avatarReports.src = src;
+            if (avatarAdmin) avatarAdmin.src = src;
+        }
+        function handleProfileUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const dataUrl = e.target.result;
+                if (currentUser) {
+                    currentUser.profileImage = dataUrl;
+                    const u = users.find(x => x.cpf === currentUser.cpf);
+                    if (u) u.profileImage = dataUrl;
+                }
+                renderUserAvatar();
+                const editPreview = document.getElementById('edit-avatar-preview');
+                if (editPreview) editPreview.src = dataUrl;
+            };
+            reader.readAsDataURL(file);
+        }
+        function openEditProfile() {
+            if (!currentUser) { alert('Faça login para editar o perfil.'); return; }
+            
+            document.getElementById('edit-nome').value = currentUser.nome || '';
+            document.getElementById('edit-sobrenome').value = currentUser.sobrenome || '';
+            document.getElementById('edit-cpf_cnpj').value = maskCPF_CNPJ(currentUser.cpf_cnpj || '');
+            document.getElementById('edit-idade').value = currentUser.idade || '';
+            document.getElementById('edit-crm').value = maskCRM(currentUser.crm || '');
+            document.getElementById('edit-telefone').value = maskTelefone(currentUser.telefone || '');
+            
+            const placeholder = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%234B5563' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/><circle cx='12' cy='7' r='4'/></svg>";
+            document.getElementById('edit-avatar-preview').src = currentUser.profileImage || placeholder;
+            
+            document.getElementById('edit-profile-modal').style.display = 'flex';
+            lucide.createIcons(); 
+        }
+        function closeEditProfile() {
+            document.getElementById('edit-profile-modal').style.display = 'none';
+        }
+        function saveProfileEdits() {
+            const nome = document.getElementById('edit-nome').value.trim();
+            const sobrenome = document.getElementById('edit-sobrenome').value.trim();
+            const cpf_cnpj = document.getElementById('edit-cpf_cnpj').value.replace(/\D/g, ''); 
+            const idade = document.getElementById('edit-idade').value.trim();
+            const crm = document.getElementById('edit-crm').value.trim().toUpperCase(); 
+            const telefone = document.getElementById('edit-telefone').value.replace(/\D/g, ''); 
+
+            if (!nome || !sobrenome) { alert('Preencha pelo menos Nome e Sobrenome.'); return; }
+            if (!currentUser) { alert('Nenhum usuário logado.'); return; }
+
+            currentUser.nome = nome;
+            currentUser.sobrenome = sobrenome;
+            currentUser.cpf_cnpj = cpf_cnpj;
+            currentUser.idade = idade;
+            currentUser.crm = crm;
+            currentUser.telefone = telefone;
+
+            const u = users.find(x => x.cpf === currentUser.cpf);
+            if (u) {
+                u.nome = nome;
+                u.sobrenome = sobrenome;
+                u.cpf_cnpj = cpf_cnpj;
+                u.idade = idade;
+                u.crm = crm;
+                u.telefone = telefone;
+            }
+
+            document.getElementById('user-welcome').innerText = `Bem-vindo, ${currentUser.nome} ${currentUser.sobrenome}`;
+            renderUsersTable(); 
+
+            closeEditProfile();
+            alert('Perfil atualizado com sucesso.');
+        }
+
+        // --- INICIALIZAÇÃO ---
+        
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
+        
+        document.getElementById('profile-upload-input').addEventListener('change', handleProfileUpload);
+        document.getElementById('document-upload').addEventListener('change', handleImageUpload);
+        document.getElementById('remove-image-btn').addEventListener('click', removeImage);
+        document.getElementById('save-document-btn').addEventListener('click', saveDocument);
+        document.getElementById('filter-apply-btn').addEventListener('click', renderReportsTable);
+ 
+        document.getElementById('edit-change-photo').addEventListener('click', () => document.getElementById('profile-upload-input').click());
+        document.getElementById('edit-cancel').addEventListener('click', closeEditProfile);
+        document.getElementById('edit-cancel-2').addEventListener('click', closeEditProfile);
+        document.getElementById('edit-save').addEventListener('click', saveProfileEdits);
+
+        document.getElementById('edit-cpf_cnpj').addEventListener('input', (e) => { e.target.value = maskCPF_CNPJ(e.target.value); });
+        document.getElementById('edit-telefone').addEventListener('input', (e) => { e.target.value = maskTelefone(e.target.value); });
+        document.getElementById('edit-crm').addEventListener('input', (e) => { e.target.value = maskCRM(e.target.value); });
+
+        document.querySelectorAll('.theme-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', toggleTheme);
+        });
+
+         initTheme(); 
+         lucide.createIcons();
+         renderUserAvatar();
+    </script>
+</body>
+</html>
